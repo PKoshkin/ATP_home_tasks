@@ -23,17 +23,17 @@ private:
 public:
 	template <bool isConst = false> // Константный и неконстантный итераторы
 	// Наследуемся от std::iterator
-	class DequeIterator : public std::iterator<std::random_access_iterator_tag, T, ptrdiff_t, T*, typename std::conditional<isConst, const T&, T&> >
+	class DequeIterator : public std::iterator<std::random_access_iterator_tag, T, ptrdiff_t, typename std::conditional<isConst, const T*, T*>::type, typename std::conditional<isConst, const T&, T&>::type >
 	{
 	private:
 		typename std::conditional<isConst, const Deque*, Deque*>::type owner; //Указатель на Deque, на эл-ты которого указывает итереатор
-		size_t index; //Индекс в структуре
+		int index; //Индекс в структуре
 		bool isReversed; // Реверсивный или нереверсивный итеретор
 
 	public:
 
 		//Констуктор с тремя аргументами
-		DequeIterator(typename std::conditional<isConst, const Deque*, Deque*>::type inOwner, size_t inIndex, bool inIsReversed = false)
+		DequeIterator(typename std::conditional<isConst, const Deque*, Deque*>::type inOwner, int inIndex, bool inIsReversed = false)
 		{
 			owner = inOwner;
 			index = inIndex;
@@ -47,7 +47,7 @@ public:
 			owner = NULL;
 			isReversed = false;
 		}
-
+		
 		// Конструктор копирования
 		DequeIterator(const DequeIterator& it)
 		{
@@ -94,7 +94,7 @@ public:
 			return temp;
 		}
 
-		typename std::conditional<isConst, T, T&>::type operator * ()
+		reference operator * ()
 		{
 			return (*owner)[index];
 		}
@@ -104,14 +104,14 @@ public:
 			return (*owner)[index];
 		}
 
-		typename std::conditional<isConst, T, T&>::type operator [] (int inIndex)
+		reference operator [] (ptrdiff_t inIndex)
 		{
-		    return (*owner)[inIndex];
+			return *(*this + inIndex);
 		}
 
-		T operator [] (int inIndex) const
+		T operator [] (ptrdiff_t inIndex) const
 		{
-			return (*owner)[inIndex];
+			return *(*this + inIndex);
 		}
 
 		T* operator -> ()
@@ -145,7 +145,7 @@ public:
 				return itL.index - itR.index;
 		}
 
-		DequeIterator operator - (int num)
+		DequeIterator operator - (ptrdiff_t num)
 		{
 			if (!isReversed)
 				return DequeIterator(owner, index - num, isReversed);
@@ -153,7 +153,7 @@ public:
 				return DequeIterator(owner, index + num, isReversed);
 		}
 
-		DequeIterator operator + (int num)
+		DequeIterator operator + (ptrdiff_t num)
 		{
 			if (!isReversed)
 				return DequeIterator(owner, index + num, isReversed);
@@ -161,7 +161,7 @@ public:
 				return DequeIterator(owner, index - num, isReversed);
 		}
 
-		friend DequeIterator operator + (int numL, DequeIterator itR)
+		friend DequeIterator operator + (ptrdiff_t numL, DequeIterator itR)
 		{
 			if (!(itR.isReversed))
 				return DequeIterator(itR.owner, itR.index + numL, itR.isReversed);
@@ -169,7 +169,7 @@ public:
 				return DequeIterator(itR.owner, itR.index - numL, itR.isReversed);
 		}
 
-		void operator += (int num)
+		void operator += (ptrdiff_t num)
 		{
 			if (!isReversed)
 				index += num;
@@ -177,7 +177,7 @@ public:
 				index -= num;
 		}
 
-		void operator -= (int num)
+		void operator -= (ptrdiff_t num)
 		{
 			if (!isReversed)
 				index -= num;
@@ -220,62 +220,62 @@ public:
 
 	DequeIterator<false> begin()
 	{
-		return DequeIterator<false>(this, left);
+		return DequeIterator<false>(this, 0);
 	}
 
 	DequeIterator<false> end()
 	{
-		return DequeIterator<false>(this, left + size_);
+		return DequeIterator<false>(this, size_);
 	}
 
 	DequeIterator<true> begin() const
 	{
-		return DequeIterator<true>(this, left);
+		return DequeIterator<true>(this, 0);
 	}
 
 	DequeIterator<true> end() const
 	{
-		return DequeIterator<true>(this, left + size_);
+		return DequeIterator<true>(this, size_);
 	}
 
 	DequeIterator<true> cbegin() const
 	{
-		return DequeIterator<true>(this, left);
+		return DequeIterator<true>(this, 0);
 	}
 
 	DequeIterator<true> cend() const
 	{
-		return DequeIterator<true>(this, left + size_);
+		return DequeIterator<true>(this, size_);
 	}
 
 	DequeIterator<false> rbegin()
 	{
-		return DequeIterator<false>(this, left + size_ - 1, true);
+		return DequeIterator<false>(this, size_ - 1, true);
 	}
 
 	DequeIterator<false> rend()
 	{
-		return DequeIterator<false>(this, left - 1, true);
+		return DequeIterator<false>(this, -1, true);
 	}
-
+	
 	DequeIterator<true> rbegin() const
 	{
-		return DequeIterator<true>(this, left + size_ - 1, true);
+		return DequeIterator<true>(this, size_ - 1, true);
 	}
 
 	DequeIterator<true> rend() const
 	{
-		return DequeIterator<true>(this, left - 1, true);
+		return DequeIterator<true>(this, -1, true);
 	}
 
 	DequeIterator<true> crbegin() const
 	{
-		return DequeIterator<true>(this, left + size_ - 1, true);
+		return DequeIterator<true>(this, size_ - 1, true);
 	}
 
 	DequeIterator<true> crend() const
 	{
-		return DequeIterator<true>(this, left - 1, true);
+		return DequeIterator<true>(this, -1, true);
 	}
 
 	Deque() // Конструктор без аргументов
@@ -400,7 +400,7 @@ public:
 				left--;
 			}
 		}
-        size_++;
+		size_++;
 	}
 
 	T pop_back() // Удаление последнего
